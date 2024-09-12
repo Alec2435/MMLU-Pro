@@ -110,7 +110,7 @@ def call_api(client, instruction, inputs):
                 }
         ]
         completion = client.chat.completions.create(
-          model="shareweights/v5_70",
+          model="shareweights/v5_70_bf16",
           messages=messages,
           temperature=0.7,
           max_tokens=6000,

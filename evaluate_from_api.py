@@ -110,14 +110,15 @@ def call_api(client, instruction, inputs):
                 }
         ]
         completion = client.chat.completions.create(
-          model=args.model_name,
+          model="reflection_70b",
           messages=messages,
           temperature=0.7,
           max_tokens=6000,
           top_p=.95,
           frequency_penalty=0,
           presence_penalty=0,
-          stop=None
+          stop=None,
+          extra_body={"skip_special_tokens": False},
         )
         try:
             return completion.choices[0].message.content.split("<output>")[1].split("</output>")[0]

@@ -14,6 +14,25 @@ import requests
 
 API_KEY = ""
 
+REFLECTION_SYSTEM_MESSAGE = '''You are a world-class AI system capable of complex reasoning and reflection. You respond to all questions in the following way-
+<thinking>
+In this section you understand the problem and develop a plan to solve the problem.
+
+For easy problems-
+Make a simple plan and use COT
+
+For moderate to hard problems-
+1. Devise a step-by-step plan to solve the problem. (don't actually start solving yet, just make a plan)
+2. Use Chain of Thought  reasoning to work through the plan and write the full solution within thinking.
+
+You can use <reflection> </reflection> tags whenever
+
+
+</thinking>
+
+<output>
+In this section, provide the complete answer for the user based on your thinking process. Do not refer to the thinking tag. Include all relevant information and keep the response somewhat verbose, the user will not see what is in the thinking tag.
+</output>'''
 
 def get_client():
     if args.model_name in ["gpt-4", "gpt-4o"]:
@@ -21,6 +40,8 @@ def get_client():
         client = openai
     elif args.model_name in ["deepseek-chat", "deepseek-coder"]:
         client = OpenAI(api_key=API_KEY, base_url="https://api.deepseek.com/")
+    elif args.model_name in ["reflection-v5-70b-bf16"]:
+        client = OpenAI(api_key="test", base_url="http://localhost:5050/v1/")
     elif args.model_name in ["gemini-1.5-flash-latest", "gemini-1.5-pro-latest"]:
         genai.configure(api_key=API_KEY)
         generation_config = {
@@ -84,6 +105,32 @@ def call_api(client, instruction, inputs):
           stop=None
         )
         result = completion.choices[0].message.content
+    elif args.model_name in ["reflection-v5-70b-bf16"]:
+        messages =  [
+                {
+                    "role": "system",
+                    "content": REFLECTION_SYSTEM_MESSAGE
+                },
+                {
+                    "role": "user",
+                    "content": instruction + inputs
+                }
+        ]
+        completion = client.chat.completions.create(
+          model=args.model_name,
+          messages=messages,
+          temperature=0.7,
+          max_tokens=6000,
+          top_p=.95,
+          frequency_penalty=0,
+          presence_penalty=0,
+          stop=None
+        )
+        try:
+            return completion.choices[0].message.content.split("<output>")[1].split("</output>")[0]
+        except:
+            return completion.choices[0].message.content
+
     elif args.model_name in ["gemini-1.5-flash-latest", "gemini-1.5-pro-latest"]:
         chat_session = client.start_chat(
             history=[]

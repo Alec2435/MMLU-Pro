@@ -40,8 +40,6 @@ def get_client():
         client = openai
     elif args.model_name in ["deepseek-chat", "deepseek-coder"]:
         client = OpenAI(api_key=API_KEY, base_url="https://api.deepseek.com/")
-    elif args.model_name in ["reflection-v5-70b-bf16"]:
-        client = OpenAI(api_key="test", base_url="http://localhost:5050/v1/")
     elif args.model_name in ["gemini-1.5-flash-latest", "gemini-1.5-pro-latest"]:
         genai.configure(api_key=API_KEY)
         generation_config = {
@@ -78,12 +76,7 @@ def get_client():
             api_key=API_KEY,
         )
     elif args.model_name == 'reflection':
-        url = "https://api.hyperbolic.xyz/v1/chat/completions"
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {API_KEY}"
-        }
-        client = {'url': url, 'headers': headers}
+        client = OpenAI(api_key="test", base_url="http://localhost:5050/v1/")
     else:
         client = None
         print("For other model API calls, please implement the client definition method yourself.")
@@ -105,7 +98,7 @@ def call_api(client, instruction, inputs):
           stop=None
         )
         result = completion.choices[0].message.content
-    elif args.model_name in ["reflection-v5-70b-bf16"]:
+    elif args.model_name in ["reflection"]:
         messages =  [
                 {
                     "role": "system",
@@ -148,25 +141,6 @@ def call_api(client, instruction, inputs):
             top_p=1,
         )
         result = message.content[0].text
-    elif args.model_name in ['reflection']:
-        data = {
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are a world-class AI system, capable of complex reasoning and reflection. Reason through the query inside <thinking> tags, and then provide your final response inside <output> tags. If you detect that you made a mistake in your reasoning at any point, correct yourself inside <reflection> tags."
-                },
-                {
-                    "role": "user",
-                    "content": instruction + inputs
-                }
-            ],
-            "model": "mattshumer/Reflection-Llama-3.1-70B",
-            "max_tokens": 1024,
-            "temperature": 0.0,
-            "top_p": 0.9
-        }
-        response = requests.post(client['url'], headers=client['headers'], json=data)
-        result = response.json()['choices'][0]['message']['content']
     else:
         print("For other model API calls, please implement the request method yourself.")
         result = None
